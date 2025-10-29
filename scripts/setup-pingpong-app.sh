@@ -100,6 +100,6 @@ echo "To sync immediately:"
 echo "  argocd app sync $APP_NAME"
 echo ""
 echo "To test the pingpong endpoint:"
-echo "  kubectl port-forward svc/pingpong -n pingpong 8080:80"
+echo "  kubectl port-forward svc/pingpong -n pingpong 8080:8081"
 echo "  curl http://localhost:8080"
 

@@ -482,7 +482,7 @@ kubectl get all -n pingpong
 Port-forward to test the service:
 
 ```bash
-kubectl port-forward svc/pingpong -n pingpong 8080:80
+kubectl port-forward svc/pingpong -n pingpong 8080:8081
 ```
 
 In another terminal, test it:
