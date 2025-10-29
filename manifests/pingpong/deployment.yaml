@@ -21,7 +21,7 @@ spec:
       - name: pingpong
         image: hashicorp/http-echo:latest
         args:
-          - -text=hello world
+          - text="Version: v1.0.0"
         ports:
         - containerPort: 8080
           protocol: TCP
@@ -33,4 +33,16 @@ spec:
           limits:
             memory: "64Mi"
             cpu: "100m"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 20
 

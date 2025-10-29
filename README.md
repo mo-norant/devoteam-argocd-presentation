@@ -482,17 +482,13 @@ kubectl get all -n pingpong
 Port-forward to test the service:
 
 ```bash
-kubectl port-forward svc/pingpong -n pingpong 8082:8082
+kubectl port-forward svc/pingpong -n pingpong 8080:80
 ```
 
-**Note:** We use port 8082 to avoid conflicts with ArgoCD UI (which uses 8080).
-
-Then open in your browser: **http://localhost:8082**
-
-Or test with curl:
+In another terminal, test it:
 
 ```bash
-curl http://localhost:8082
+curl http://localhost:8080
 ```
 
 You should see: `Pong! Version: v1.0.0`
