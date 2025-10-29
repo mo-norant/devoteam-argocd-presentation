@@ -21,10 +21,7 @@ spec:
       - name: pingpong
         image: hashicorp/http-echo:latest
         args:
-          - -text
-          - -listen
-          - :8080
-          - 'Pong! Version: v1.0.0'
+          - text="Version: v1.0.0"
         ports:
         - containerPort: 8080
           protocol: TCP

@@ -499,10 +499,8 @@ To demonstrate version updates, edit `manifests/pingpong/deployment.yaml` and ch
 
 ```yaml
 args:
-  - -text
-  - -listen
-  - :8080
-  - 'Pong! Version: v2.0.0'  # Updated version
+  - -listen=:8080
+  - -text="Pong! Version: v2.0.0"  # Updated version
 ```
 
 Also update the version label:
