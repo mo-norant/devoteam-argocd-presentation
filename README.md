@@ -434,6 +434,113 @@ You should see the guestbook deployment and service running.
 - [ ] Guestbook pods running
 - [ ] Application shows "Healthy" and "Synced" status
 
+### Optional: Create a Second Application (PingPong)
+
+Let's create another application to demonstrate ArgoCD managing multiple workloads. The PingPong application responds to HTTP requests with "Pong! Version: v1.0.0".
+
+The manifests are located in `manifests/pingpong/`:
+
+- `namespace.yaml` - Creates the pingpong namespace
+- `deployment.yaml` - Deploys the pingpong service (responds with version info)
+- `service.yaml` - Exposes the pingpong service
+- `kustomization.yaml` - Kustomize configuration
+
+#### Create PingPong Application via CLI
+
+```bash
+argocd app create pingpong \
+  --repo <YOUR_REPO_URL> \
+  --path manifests/pingpong \
+  --dest-server https://kubernetes.default.svc \
+  --dest-namespace pingpong \
+  --sync-policy automated \
+  --auto-prune \
+  --self-heal \
+  --sync-option CreateNamespace=true
+```
+
+Or use the helper script:
+
+```bash
+chmod +x scripts/setup-pingpong-app.sh
+./scripts/setup-pingpong-app.sh <YOUR_REPO_URL>
+```
+
+#### Sync and Verify PingPong
+
+```bash
+# Sync if not auto-syncing
+argocd app sync pingpong
+
+# Check status
+argocd app get pingpong
+kubectl get all -n pingpong
+```
+
+#### Test the PingPong Service
+
+Port-forward to test the service:
+
+```bash
+kubectl port-forward svc/pingpong -n pingpong 8080:80
+```
+
+In another terminal, test it:
+
+```bash
+curl http://localhost:8080
+```
+
+You should see: `Pong! Version: v1.0.0`
+
+#### Update PingPong Version
+
+To demonstrate version updates, edit `manifests/pingpong/deployment.yaml` and change the version in the args:
+
+```yaml
+args:
+  - -text
+  - -listen
+  - :8080
+  - 'Pong! Version: v2.0.0'  # Updated version
+```
+
+Also update the version label:
+
+```yaml
+labels:
+  app: pingpong
+  version: "v2.0.0"
+```
+
+Commit and push:
+
+```bash
+git add manifests/pingpong/deployment.yaml
+git commit -m "Update pingpong to v2.0.0"
+git push origin main
+```
+
+ArgoCD will detect the change and sync automatically (if auto-sync is enabled), or refresh and sync manually:
+
+```bash
+argocd app get pingpong --refresh
+argocd app sync pingpong
+```
+
+Test the new version:
+
+```bash
+curl http://localhost:8080
+# Should now show: Pong! Version: v2.0.0
+```
+
+**✅ Checklist for PingPong:**
+- [ ] PingPong application created
+- [ ] Application synced and healthy
+- [ ] Service responds with version info
+- [ ] Version update demonstrated
+
 ---
 
 ## 6. Monitoring and Syncing
@@ -689,15 +796,18 @@ You should see the previous image version.
 
 After the tutorial, clean up all resources.
 
-### Remove the Application
+### Remove the Applications
+
+Delete both applications (guestbook and pingpong):
 
 ```bash
-# Delete the application (this will delete all managed resources)
+# Delete the applications (this will delete all managed resources)
 argocd app delete guestbook
+argocd app delete pingpong
 ```
 
 Or via UI:
-1. Click on the `guestbook` application
+1. Click on each application (`guestbook` and `pingpong`)
 2. Click the three dots menu (⋮)
 3. Select **Delete**
 4. Confirm deletion
@@ -733,16 +843,23 @@ kind delete cluster --name argocd-demo
 
 ### Using the Cleanup Script
 
-We've provided a cleanup script for convenience:
+We've provided a cleanup script for convenience that removes both applications:
 
 ```bash
 chmod +x scripts/cleanup.sh
 ./scripts/cleanup.sh
 ```
 
+To also remove ArgoCD:
+
+```bash
+./scripts/cleanup.sh yes
+```
+
 **✅ Checklist:**
-- [ ] Application deleted
+- [ ] Applications deleted (guestbook and pingpong)
 - [ ] Resources cleaned up
+- [ ] Namespaces removed
 - [ ] ArgoCD uninstalled (if desired)
 - [ ] Cluster stopped (if desired)
 

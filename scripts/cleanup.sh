@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Cleanup Script for ArgoCD Tutorial
-# This script removes the guestbook application and optionally ArgoCD
+# This script removes the tutorial applications (guestbook and pingpong) and optionally ArgoCD
 
 set -e
 
@@ -11,8 +11,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-APP_NAME="${1:-guestbook}"
-CLEANUP_ARGOCD="${2:-no}"
+CLEANUP_ARGOCD="${1:-no}"
 
 echo "🧹 ArgoCD Tutorial Cleanup"
 echo ""
@@ -27,34 +26,43 @@ confirm() {
     return 0
 }
 
-# Delete the application
-if kubectl get application "$APP_NAME" -n argocd &> /dev/null; then
-    echo -e "${YELLOW}📱 Found application: $APP_NAME${NC}"
-    if confirm "Delete the application '$APP_NAME'? (This will delete all managed resources)"; then
-        echo "🗑️  Deleting application..."
-        
-        # Try using CLI first
-        if command -v argocd &> /dev/null && argocd account get &> /dev/null; then
-            argocd app delete "$APP_NAME" --yes || true
-        else
-            kubectl delete application "$APP_NAME" -n argocd || true
-        fi
-        
-        echo -e "${GREEN}✅ Application deleted${NC}"
-    fi
-else
-    echo -e "${YELLOW}ℹ️  Application '$APP_NAME' not found${NC}"
-fi
+# List of applications to cleanup
+APPS=("guestbook" "pingpong")
 
-# Delete namespace directly (in case application deletion didn't remove it)
-if kubectl get namespace guestbook &> /dev/null; then
-    echo ""
-    if confirm "Remove the 'guestbook' namespace?"; then
-        echo "🗑️  Deleting namespace..."
-        kubectl delete namespace guestbook || true
-        echo -e "${GREEN}✅ Namespace deleted${NC}"
+# Delete applications
+for APP_NAME in "${APPS[@]}"; do
+    if kubectl get application "$APP_NAME" -n argocd &> /dev/null; then
+        echo -e "${YELLOW}📱 Found application: $APP_NAME${NC}"
+        if confirm "Delete the application '$APP_NAME'? (This will delete all managed resources)"; then
+            echo "🗑️  Deleting application..."
+            
+            # Try using CLI first
+            if command -v argocd &> /dev/null && argocd account get &> /dev/null; then
+                argocd app delete "$APP_NAME" --yes || true
+            else
+                kubectl delete application "$APP_NAME" -n argocd || true
+            fi
+            
+            echo -e "${GREEN}✅ Application '$APP_NAME' deleted${NC}"
+        fi
+    else
+        echo -e "${YELLOW}ℹ️  Application '$APP_NAME' not found${NC}"
     fi
-fi
+    echo ""
+done
+
+# Delete namespaces directly (in case application deletion didn't remove them)
+NAMESPACES=("guestbook" "pingpong")
+for NS in "${NAMESPACES[@]}"; do
+    if kubectl get namespace "$NS" &> /dev/null; then
+        if confirm "Remove the '$NS' namespace?"; then
+            echo "🗑️  Deleting namespace..."
+            kubectl delete namespace "$NS" || true
+            echo -e "${GREEN}✅ Namespace '$NS' deleted${NC}"
+        fi
+    fi
+    echo ""
+done
 
 # Cleanup ArgoCD if requested
 if [ "$CLEANUP_ARGOCD" = "yes" ] || [ "$CLEANUP_ARGOCD" = "y" ]; then
@@ -69,7 +77,7 @@ else
     echo ""
     echo -e "${YELLOW}ℹ️  ArgoCD is still running${NC}"
     echo "To uninstall ArgoCD, run:"
-    echo "  $0 $APP_NAME yes"
+    echo "  $0 yes"
 fi
 
 echo ""
